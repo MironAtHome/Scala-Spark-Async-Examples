@@ -14,7 +14,11 @@ No error or exception, no message. And so mounts sense of "something is wrong".
 The answers to find a way from similar situation, when studying foreachPartitionAsync 
 came from reading carefully Scala programming language description of Futures.
 In the end all it took is to place .onComplete at the tail of the foreachPartitionAsync call, 
-add import of 
+add import statement
+
+
+import scala.util.{Try, Success, Failure}
+
 
 and suddenly accumulator that was producing no output for good part of the day started 
 behaving exactly same way, as in synchronous programming, when using foreachPartition, no Async suffix.
