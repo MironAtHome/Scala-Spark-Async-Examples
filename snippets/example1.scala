@@ -7,8 +7,29 @@ import org.apache.spark.sql.types.{StructType, StructField, LongType}
 val df = spark.sqlContext.read.json("testJson.json")
 df.show()
 var acc = spark.sparkContext.collectionAccumulator[(String)]("SomeName")
-df.select(to_json(struct(col("*"))).alias("content")).rdd.foreachPartitionAsync(iter => iter.foreach(row => acc.add(row.getString(row.fieldIndex("content"))) ) ).onComplete { case Success(v) => println(acc.value.toArray.size) case Failure (t) => println("Error occurred")}
-acc.value.toArray
+spark.time (
+  df.
+    select(to_json(struct(col("*"))).alias("content")).
+	     rdd.
+		foreachPartitionAsync(iter => 
+		  {
+			iter.foreach(row => 
+			acc.add(
+				row.getString(row.fieldIndex("content"))
+			)
+			) 
+			Thread.sleep(10000)
+		  }
+		).
+		onComplete { 
+		  case Success(v) => println(s"Reporting from foreachPartitionAsync: ${acc.value.toArray.size}") 
+		  case Failure (t) => println("Error occurred")
+	    }
+)
+while(acc.value.toArray.size == 0) {
+  System.out.println(s"Cannot advance forward. Array acc is empty. Time: ${java.time.Instant.now}")
+  Thread.sleep(1000)
+}
 val jsonString = (new ObjectMapper()).writeValueAsString( acc.value.toArray )
 jsonString
 val schema = new StructType (
